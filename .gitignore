@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Databases / Vector store
+chromadb/
+*.sqlite3
+
+# Streamlit / web artifacts
+*.html
+*.css
+*.js
+
+# Misc
+.DS_Store
+.ipynb_checkpoints/
+*.pkl
+*.cache/
