@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IntelliDoc: RAG-powered document intelligent system
 # It's a Retrieval augmented Generation system that designed for the extraction of information from multiple docs(pdf,text..) and provide the accurate, context based answers to the user queries.
 # This project encompasses the following features
@@ -11,3 +12,7 @@ Deploy as a web application for web interface i'm using Streamlit or FastAPI
 # clone the repository
 git clone <repo-url> #will share later
 cd intellidoc-rag
+=======
+# intellidoc-rag
+"IntelliDoc: RAG-Powered Document Intelligence System"
+>>>>>>> e817c2334f63751d9dff3bee2cc2a5c22a5f718a
