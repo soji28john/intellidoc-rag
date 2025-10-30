@@ -8,11 +8,7 @@ Retrieve relevant context based on user queries
 Generate accurate answers using an LLM. Here I'm using Llama 3 
 Provide citations and confidence scores
 Deploy as a web application for web interface i'm using Streamlit or FastAPI
-## Installation
-# clone the repository
-git clone <repo-url> #will share later
-cd intellidoc-rag
-=======
-# intellidoc-rag
+
+### intellidoc-rag
 "IntelliDoc: RAG-Powered Document Intelligence System"
 >>>>>>> e817c2334f63751d9dff3bee2cc2a5c22a5f718a
