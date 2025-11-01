@@ -1,0 +1,24 @@
+[1mdiff --git a/README.md b/README.md[m
+[1mindex b484a2e..ba65e06 100644[m
+[1m--- a/README.md[m
+[1m+++ b/README.md[m
+[36m@@ -8,7 +8,16 @@[m [mRetrieve relevant context based on user queries[m
+ Generate accurate answers using an LLM. Here I'm using Llama 3 [m
+ Provide citations and confidence scores[m
+ Deploy as a web application for web interface i'm using Streamlit or FastAPI[m
+[31m-[m
+[31m-### intellidoc-rag[m
+[32m+[m[32m## Installation[m
+[32m+[m[32m# clone the repository[m
+[32m+[m[32mgit clone <repo-url> #will share later[m
+[32m+[m[32mcd intellidoc-rag[m
+[32m+[m[32m=======[m
+[32m+[m[32m# intellidoc-rag[m
+ "IntelliDoc: RAG-Powered Document Intelligence System"[m
+ >>>>>>> e817c2334f63751d9dff3bee2cc2a5c22a5f718a[m
+[32m+[m[32m### Chunking strategy[m
+[32m+[m[32mIn the "Intellidoc" RAG system the loaded documents splits into smaller and overlapping text chunks.[m[41m [m
+[32m+[m[32mThis ensures that The LLM can process large documents and also, preserve the context across the textchunks overlap, help to retrieve the relevant informations more accurately.[m[41m [m
+[32m+[m[32mFor more understanding take a look at the code(chunking algorithm-chunk size , chunk overlap)[m
+[32m+[m[32mThis allows the system to maintain the context across segments, that improves the quality of the retrieved queries answers.[m
+\ No newline at end of file[m

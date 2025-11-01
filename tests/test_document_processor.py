@@ -1,7 +1,7 @@
 import os
 import sys
 import pytest
-import PyPDF2
+#import PyPDF2
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.document_processor import DocumentProcessor
 
