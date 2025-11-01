@@ -13,3 +13,6 @@ In the "Intellidoc" RAG system the loaded documents splits into smaller and over
 This ensures that The LLM can process large documents and also, preserve the context across the textchunks overlap, help to retrieve the relevant informations more accurately. 
 For more understanding take a look at the code(chunking algorithm-chunk size , chunk overlap)
 This allows the system to maintain the context across segments, that improves the quality of the retrieved queries answers.
+### Embedding process/generation in intelliDoc-rag
+this enables semantic search and accurate retrieval through vector embeddings of text chunks. 
+We used S-BERT(all-MiniLM-L6-v2) transformer, this creates a vector embeddings and vectors, metadata stored in ChromeDB for fast retrieval.
