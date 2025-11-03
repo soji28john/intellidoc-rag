@@ -1,5 +1,6 @@
 """
-RAG Pipeline Module
+RAG Pipeline Module with advanced features
+conversational memory, re-ranking, Hybrid search
 Orchestrates the complete RAG workflow
 """
 
@@ -10,7 +11,14 @@ from src.llm_interface import LLMInterface
 from typing import Dict, List
 import time
 
+try: 
+    from sentence_transformers import CrossEncoder
+except Exception:
+    CrossEncoder = None
+from rank_bm25 import BM25Okapi
+
 class RAGPipeline:
+    
     """
     Complete RAG pipeline- workflow
     document ingestion(processing, embedding,storage)
@@ -24,14 +32,26 @@ class RAGPipeline:
     llm interfaces with the language model for answer generation
     """
     # initialization of all components
-    def __init__(self):
+    def __init__(self, use_reranker: bool = False, reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         
+
         self.doc_processor = DocumentProcessor()
         self.embedding_gen = EmbeddingGenerator()
         self.vector_store = VectorStore()
         self.llm = LLMInterface()
+        self.use_reranker = use_reranker
+        self.reranker_model = reranker_model
+        self.reranker = None
+        self._bm25 = None
+        self._bm25_corpus = []
+        if self.use_reranker:
+            if CrossEncoder is None:
+                raise ImportError("crossEncoder not available. Install sentence-transformers and torch.")
+            
+            self.reranker = CrossEncoder(self.reranker_model)
         
-        #print("RAG Pipeline initialized")
+            
+        print("RAG Pipeline initialized (use_reranker=%s)" % self.use_reranker)
     
     def ingest_document(self, file_path: str) -> Dict:
         """
@@ -66,34 +86,91 @@ class RAGPipeline:
             metadatas=[doc['metadata'] for doc in docs]
         )
         
-        elapsed_time = time.time() - start_time
+        self._bm25_corpus.extend([text.split() for text in texts])
+        if self._bm25_corpus:
+            self._bm25 = BM25Okapi(self._bm25_corpus)
+        
         
         return {
             'file': file_path,
             'chunks_created': len(docs),
-            'time_taken': f"{elapsed_time:.2f} seconds",
+            'time_taken': f"{time.time() - start_time:.2f}s",
             'status': 'success'
         }
     
-    def ingest_multiple_documents(self, file_paths: List[str]) -> List[Dict]:
+    def ingest_multiple_documents(self, file_paths: List[str]):
         """Ingest multiple documents sequentially
         Args:
             file_paths: (List[str]:List of document file paths
         Returns:
             List[Dict]:List of ingestion statistics for each document
         """
+        return [self.ingest_document(path) for path in file_paths]
+
         
-        results = []
-        for file_path in file_paths:
-            result = self.ingest_document(file_path)
-            results.append(result)
-        return results
+    
+    def retrieve_semantic(self, query: str, top_k: int = 10):
+        query_emb = self.embedding_gen.generate_embedding(query)
+        results = self.vector_store.search(query_emb, n_results=top_k)
+        docs = results["documents"][0]
+        metas = results["metadatas"][0]
+        return [{"content": d, "metadata": m} for d, m in zip(docs, metas)]
+
+    def retrieve_bm25(self, query: str, top_k: int = 10):
+        if not self._bm25:
+            return []
+        tokenized = query.split()
+        top = self._bm25.get_top_n(tokenized, self._bm25_corpus, n=top_k)
+        # top are token lists; join back to string
+        return [" ".join(t) for t in top]
+    
+    def rerank_results(self, query: str, docs: List[str]):
+        """
+        Rerank the provided docs list using cross-encoder (query, doc).
+        Returns list of dicts: {'content': doc, 'score': float}
+        """
+        if not self.reranker:
+            # fallback: return docs with default score
+            return [{"content": d, "score": 0.0} for d in docs]
+
+        # prepare pairs
+        pairs = [(query, d) for d in docs]
+        scores = self.reranker.predict(pairs, show_progress_bar=False)  # numpy array
+        scored = [{"content": d, "score": float(s)} for d, s in zip(docs, scores)]
+        # sort desc
+        return sorted(scored, key=lambda x: x["score"], reverse=True)
+        
+    def hybrid_search(self, query: str, top_k_semantic: int = 10, top_k_bm25: int = 10, final_k: int = 5):
+        # semantic
+        sem = self.retrieve_semantic(query, top_k_semantic)
+        sem_texts = [r["content"] for r in sem]
+
+        # bm25
+        bm25_texts = self.retrieve_bm25(query, top_k_bm25)
+
+        # merge, preserve order from semantic then bm25 
+        seen, merged = set(),[]
+        
+        for t in sem_texts + bm25_texts:
+            if t not in seen:
+                seen.add(t)
+                merged.append(t)
+
+      
+        if self.use_reranker:
+            reranked = self.rerank_results(query, merged)
+            merged_sorted = [r["content"] for r in reranked][:final_k]
+        else:
+            merged_sorted = merged[:final_k]
+
+        # return as context dicts
+        return [{"content": c, "metadata": {}} for c in merged_sorted]
+    
     # Querying the system
     def query(self, 
              question: str, 
              n_results: int = 5,
-             include_sources: bool = True,
-             return_chunks: bool = False) -> Dict:
+             include_sources: bool = True) -> Dict:
         
         """
         Ask a query and retrieve an answer using the RAG system
@@ -106,52 +183,47 @@ class RAGPipeline:
         Returns:
             Dict with answer, sources, and metadata(query_time, retrieved_chunks)
         """
+                
         start_time = time.time()
-        
-        # Step 1: Generate query embedding
         print(f"Query: {question}")
-        query_embedding = self.embedding_gen.generate_embedding(question)
-        
-        # Step 2: Retrieve relevant documents
-        print(f"Retrieving top {n_results} relevant documents...")
-        search_results = self.vector_store.search(query_embedding, n_results)
-        
-        # Step 3: Prepare context
-        context = []
-        for i, doc in enumerate(search_results['documents'][0]):
-            context.append({
-                'content': doc,
-                'metadata': search_results['metadatas'][0][i]
-            })
-        
-        # Step 4: Generate answer
-        if return_chunks:
-            return {
-        "chunks": context,
-        "retrieved_texts": [c["content"] for c in context],
-        "metadatas": [c["metadata"] for c in context]
-    }
-        print("Generating answer...")
-        if include_sources:
-            result = self.llm.generate_with_citations(question, context)
+
+        candidates = self.retrieve_semantic(question, top_k=n_results * 3)
+        candidate_texts = [c["content"] for c in candidates]
+
+        if self.use_reranker:
+            reranked = self.rerank_results(question, candidate_texts)
+            final_chunks = [{"content": r["content"], "metadata": {}} for r in reranked[:n_results]]
         else:
-            answer = self.llm.generate_response(
-                question, 
-                [ctx['content'] for ctx in context]
-            )
-            result = {'answer': answer}
+            final_chunks = candidates[:n_results]
+
+        context_texts = [c["content"] for c in final_chunks]
+
+        if include_sources:
+            answer_obj = self.llm.generate_with_citations(question, final_chunks)
+        else:
+            answer_text = self.llm.generate_response(question, context_texts)
+            answer_obj = {"answer": answer_text}
+
+        answer_obj["query_time"] = f"{time.time() - start_time:.2f} seconds"
+        answer_obj["retrieved_chunks"] = len(final_chunks)
         
-        # Add timing info
-        result['query_time'] = f"{time.time() - start_time:.2f} seconds"
-        result['retrieved_chunks'] = n_results
-        
-        return result
+        return answer_obj
+
     
-    def get_system_stats(self) -> Dict:
-        """Get statistics about the RAG system"""
-        return {
-            'total_documents': self.vector_store.get_collection_stats()['total_documents'],
-            'embedding_model': self.embedding_gen.model,
-            'embedding_dimension': self.embedding_gen.embedding_dim,
-            'llm_model': self.llm.model
-        }
+ # Conversational Memory
+class ConversationalRAG(RAGPipeline):
+    def __init__(self, use_reranker: bool = False, reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
+        super().__init__(use_reranker=use_reranker, reranker_model=reranker_model)
+        self.conversation_history: List[Dict] = []
+
+    def query_with_history(self, question: str, n_results: int = 5, include_sources: bool = True):
+        # prepare history snippet 
+        history_snippet = "\n".join([f"Q: {h['question']}\nA: {h['answer']}" for h in self.conversation_history[-5:]])
+        # incorporate history into the question 
+        question_with_history = (history_snippet + "\n\n" + question) if history_snippet else question
+
+        result = self.query(question_with_history, n_results=n_results, include_sources=include_sources)
+
+        # store canonical question and answer 
+        self.conversation_history.append({"question": question, "answer": result.get("answer", "")})
+        return result
