@@ -209,7 +209,13 @@ class RAGPipeline:
         
         return answer_obj
 
-    
+    def get_system_stats(self):
+        return {
+        "total_documents": len(self.vector_store.embeddings) if hasattr(self.vector_store, "embeddings") else "N/A",
+        "embedding_model": self.embedding_gen.model_name,
+        "llm_model": self.llm.model
+    }
+
  # Conversational Memory
 class ConversationalRAG(RAGPipeline):
     def __init__(self, use_reranker: bool = False, reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
