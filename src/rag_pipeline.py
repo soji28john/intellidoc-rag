@@ -31,7 +31,7 @@ class RAGPipeline:
         self.vector_store = VectorStore()
         self.llm = LLMInterface()
         
-        print("RAG Pipeline initialized")
+        #print("RAG Pipeline initialized")
     
     def ingest_document(self, file_path: str) -> Dict:
         """
@@ -92,7 +92,9 @@ class RAGPipeline:
     def query(self, 
              question: str, 
              n_results: int = 5,
-             include_sources: bool = True) -> Dict:
+             include_sources: bool = True,
+             return_chunks: bool = False) -> Dict:
+        
         """
         Ask a query and retrieve an answer using the RAG system
         
@@ -123,6 +125,12 @@ class RAGPipeline:
             })
         
         # Step 4: Generate answer
+        if return_chunks:
+            return {
+        "chunks": context,
+        "retrieved_texts": [c["content"] for c in context],
+        "metadatas": [c["metadata"] for c in context]
+    }
         print("Generating answer...")
         if include_sources:
             result = self.llm.generate_with_citations(question, context)
