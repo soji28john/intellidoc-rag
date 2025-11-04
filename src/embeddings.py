@@ -19,6 +19,8 @@ class EmbeddingGenerator:
         Model chosen from Sentence-BERT options:
         - 'all-MiniLM-L6-v2': It's Fast, good quality, 384 dimensions
             """
+        self.model = model_name
+        from sentence_transformers import SentenceTransformer
         self.model = SentenceTransformer(model_name)
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
     

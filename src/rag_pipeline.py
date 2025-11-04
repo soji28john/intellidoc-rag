@@ -211,10 +211,15 @@ class RAGPipeline:
 
     def get_system_stats(self):
         return {
-        "total_documents": len(self.vector_store.embeddings) if hasattr(self.vector_store, "embeddings") else "N/A",
-        "embedding_model": self.embedding_gen.model_name,
-        "llm_model": self.llm.model
+        "total_documents": len(self.vector_store.embeddings) if hasattr(self.vector_store, "embeddings") else 0,
+        "embedding_model": getattr(self.embedding_gen,"model_name", "unknown"),
+        "llm_model": getattr(self.llm, "model", "unknown")
     }
+    def reset(self):
+        if hasattr(self.vector_store, "reset"):
+            self.vector_store.reset()
+        self.ingested_files = []
+    
 
  # Conversational Memory
 class ConversationalRAG(RAGPipeline):

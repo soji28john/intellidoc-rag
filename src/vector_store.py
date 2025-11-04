@@ -15,6 +15,8 @@ class VectorStore:
     
     def __init__(self, persist_directory: str = "./chroma_db"):
         """Initialize ChromaDB client"""
+        self.embeddings = []
+        self.documents = []
         self.client = chromadb.Client(Settings(
             persist_directory=persist_directory,
             anonymized_telemetry=False
@@ -74,3 +76,12 @@ class VectorStore:
             "total_documents": self.collection.count(),
             "name": self.collection.name
         }
+    def reset(self):
+        """Reset the vector store by deleting all documents"""
+        self.embeddings = []
+        self.documents = []
+        self.client.delete_collection(name="documents")
+        self.collection = self.client.get_or_create_collection(
+            name="documents",
+            metadata={"description": "Document embeddings for RAG"}
+        )
