@@ -15,27 +15,6 @@ Delivering the output in a format that is suitable for the rendering team.
 The exact data types, along with broader architectural elements, are still under discussion. I anticipate having more details by next week.
 If anyone has any questions they would like to ask Nayla next Monday, please let me know.
 
-Questions for Jwelkit/Nayla
-
-General Questions
-
-1. How do you see the final product?
-we received a description  and perspective from the professor but we would also like your perspective(max 5min).If not mentioned aboutask extra about:
-Target user(specifically jeweller or customer)
-A:limited to the use of professionals they know the professional grammar.
-Environment(home,shop,call,etc)
-A: Can be everywhere with internet connection
-Price(limitation from customer most profit for jeweller, etc)
-Amount of examples(1 or many)
-New examples based on the initial rendering?
-What type of systems are currently already in use ? What are their names?What do they do?(max 5 minutes)A: there do not exist any system like that currently.
-
-T1 Questions?
-
-What kind of tone would you like the chatbot to have ?
-How AI would you like the chatbot to be?
-What words should the chatbot understand?A: since professionals in the field will be using it it mustbe understand the grammar of jewellers.
-
 T2 Questions?
 
 What essential features must the system provide to ensure clients can specify the basic attributes of their ring design(eg:size,material,gemstonetype)?
@@ -61,23 +40,6 @@ Will the system omit direct purchasing functionality in this version and instead
   id b2b 
  What elements are the most important factor when trying to come up with a new design (symmetry, proportions, etc)
 Sometimes stone sometimes just structured what piece material, theme?
-T3
-
-What are the types jewellery and materials we should consider ?(max 3 mins)
-initial very basic metal
-End goal
-metal and stones
-the piece should be manufacturable what position diamond sturdiness should be realistic or manufactural
-What considerations should we make out about historical cultural religious trends how often do these trends significant are these changes
-not important
-basic style should be included 
-Are there different measurement and sizing standards Which ones should all of these be considered (max 5 minutes)
--mm
-carat
-ring sizes
-What knowledge is required to be interpret what a customer asks and a make it results in what they actually want
- 	not needed as only professionals uses this system
-Design rules for jewellery design
  
 T4
 
