@@ -17,7 +17,7 @@ except Exception:
     CrossEncoder = None
 
 from rank_bm25 import BM25Okapi
-
+from src.optimization import QueryOptimizer, RAGOptimizer
 
 class RAGPipeline:
     """Complete RAG pipeline with document ingestion, semantic search, and LLM answering."""
@@ -163,9 +163,50 @@ class RAGPipeline:
             "embedding_model": getattr(self.embedding_gen, "model_name", "unknown"),
             "llm_model": getattr(self.llm, "model", "unknown")
         }
+    
+
+    def query_optimized(self, question: str, n_results: int = 5):
+        """
+        Optimized query execution with:
+        - Query expansion (semantic reformulation)
+        - Multi-variation retrieval
+        - Deduplication of chunks
+        - Cross-encoder re-ranking
+        """
+
+        print(f"[Optimized Query] Starting for: '{question}'")
+        # Expand query into multiple reformulations and Retrieve results for each variation
+        query_variations = QueryOptimizer.expand_query(question)
+        print(f"Generated {len(query_variations)} query variations.")   
+        all_results = []
+        for var in query_variations:
+            query_emb = self.embedding_gen.generate_embedding(var)
+            retrieved = self.vector_store.search(query_emb, n_results=n_results)
+            docs = retrieved.get("documents", [[]])[0]
+            all_results.extend(docs)
+
+        if not all_results:
+            return {"answer": "No relevant documents found.", "query": question}
+
+        print(f"Retrieved {len(all_results)} raw results across all variations.")
+        unique_results = RAGOptimizer.deduplicate_chunks(all_results)
+        print(f"Deduplicated to {len(unique_results)} unique results.")
+        # Re-rank for best relevance and generate final LLM answer with citations
+        reranked_docs = QueryOptimizer.rerank_results(question, unique_results, top_k=n_results)
+        print(f"Re-ranked and selected top {len(reranked_docs)} results.")
+
+        context = [{"content": doc, "metadata": {}} for doc in reranked_docs]
+        answer_obj = self.llm.generate_with_citations(question, context)
+
+        answer_obj.update({
+            "optimized": True,
+            "retrieved_chunks": len(reranked_docs),
+        })
+
+        return answer_obj
 
 
-# Optional: Conversational RAG
+# Conversational RAG
 class ConversationalRAG(RAGPipeline):
     def __init__(self, use_reranker: bool = False, reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         super().__init__(use_reranker=use_reranker, reranker_model=reranker_model)
