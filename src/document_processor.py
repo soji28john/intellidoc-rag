@@ -15,7 +15,7 @@ class DocumentProcessor:
     Process various document formats into text chunks
     """
 # constructor to initialize the chunk size and chunk overlap   
-    def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
+    def __init__(self, chunk_size: int = 300, chunk_overlap: int = 50):
         """
         Args:
             chunk_size: Size of each text chunk in characters
